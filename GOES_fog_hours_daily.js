@@ -15,8 +15,8 @@ var roi = ee.Geometry.Rectangle([-120.7, 35, -119.7, 34.3]);
 
 // Define the **Time Range** (July - August 2023)
 var startYear = 2023;
-var startMonth = 7;
-var endMonth = 8;
+var startMonth = 6;
+var endMonth = 7;
 
 // Convert start and end month to Earth Engine date format
 var startDate = ee.Date.fromYMD(startYear, startMonth, 1);
@@ -96,14 +96,12 @@ var btd = band7.subtract(band14); // BTD = Band 7 (3.9µm) - Band 14 (11.2µm)
 // 6. DETECT CLOUDS & FOG //
 // ========================== //
 
-// **Step 1: Identify All Cloud Pixels**
-// Clouds have relatively cold cloud tops, so we use a threshold to detect them.
-var cloudMask = band13.lt(273); // Cloud Top Temperature < 273K indicates high-altitude clouds
 
-// **Step 2: Identify Fog Pixels**
+
+// **Step 1: Identify Fog Pixels**
 // Fog is a low cloud with a distinct thermal signature.
-// Condition: **Warm cloud tops (CTT > 273K) AND Positive BTD (>2K)**
-var fogMask = band13.gt(273).and(btd.gt(2)).and(cloudMask.not()); 
+// Condition: **Warm cloud tops (CTT > 270K) AND Positive BTD (>2K)**
+var fogMask = band13.gt(270).and(btd.gt(2)); 
 
 // ========================== //
 // 7. VISUALIZE INTERMEDIATE DATA //
@@ -117,10 +115,8 @@ Map.addLayer(band13, {min: 260, max: 300, palette: ['blue', 'yellow', 'red']}, '
 // **Step 2: Show Brightness Temperature Difference (BTD)**
 Map.addLayer(btd, {min: -5, max: 5, palette: ['red', 'yellow', 'green']}, 'Brightness Temp Difference (BTD)');
 
-// **Step 3: Show All Cloud Pixels (Red)**
-Map.addLayer(cloudMask.updateMask(cloudMask), {palette: ['red']}, 'All Cloud Pixels');
 
-// **Step 4: Show Final Fog Mask (White)**
+// **Step 3: Show Final Fog Mask (White)**
 Map.addLayer(fogMask.updateMask(fogMask), {palette: ['white']}, 'Fog Mask (1=Fog, 0=Clear)');
 
 // ========================== //
@@ -134,8 +130,7 @@ var fogCollection = processedCollection.map(function(img) {
   var band14 = img.select('BT_CMI_C14');
 
   var btd = band7.subtract(band14);
-  var cloudMask = band13.lt(273); // Detect high clouds
-  var fog = band13.gt(273).and(btd.gt(2)).and(cloudMask.not()); // Apply fog rule
+  var fog = band13.gt(270).and(btd.gt(2)); // Apply fog rule
 
   return fog.rename('fogMask'); // Return binary fog mask (1=Fog, 0=No Fog)
 });
@@ -158,7 +153,7 @@ var fogHoursPerDay = fogPercentage.divide(100).multiply(24);
 // 9. VISUALIZE FINAL OUTPUT //
 // ========================== //
 
-Map.addLayer(fogPercentage, {min: 0, max: 100, palette: ['blue', 'white']}, 'Final Monthly Fog Cover');
+//Map.addLayer(fogPercentage, {min: 0, max: 100, palette: ['blue', 'white']}, 'Final Monthly Fog Cover');
 Map.addLayer(fogHoursPerDay, {min: 0, max: 24, palette: ['blue', 'white']}, 'Hours of Fog per Day');
 
 // ========================== //
@@ -166,7 +161,6 @@ Map.addLayer(fogHoursPerDay, {min: 0, max: 24, palette: ['blue', 'white']}, 'Hou
 // ========================== //
 print('Cloud Top Temperature (K):', band13);
 print('Brightness Temperature Difference (BTD):', btd);
-print('Cloud Mask (1=Cloud, 0=Clear):', cloudMask);
 print('Fog Mask:', fogMask);
 print('Fog Count:', fogCount);
 print('Total Observations:', totalCount);
