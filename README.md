@@ -1,4 +1,4 @@
-# Google Earth Engine GOES-16/17 Fog Percentage Project
+# Google Earth Engine GOES-16/17 Fog and Low Cloud Cover (FLCC) Project
 
 A small project I've been working on for deriving fog percentages by month from GOES-16 satellite data in GEE using Javascript. 
 
